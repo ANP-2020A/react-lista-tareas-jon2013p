@@ -1,88 +1,131 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import '../styles/toDoList.css';
 
-const TodoList = () => {
+function ToDoList() {
+  const [ list, setList ] = useState( [] );
+  const [ userId, setUserId ] = useState( 1 );
+  const [ userData, setUserData ] = useState( null );
 
-  const [ all, setAll ] = React.useState( [] );
-  const [ completed, setCompleted ] = React.useState( [] );
+  useEffect( () => {
+    const getUser = async() => {
+      const data = await fetch( `https://jsonplaceholder.typicode.com/users/${ userId }` );
+      const jsonUser = await data.json();
 
+      setUserData( jsonUser );
+    };
+    getUser();
+
+    const getList = async() => {
+      const data = await fetch( `https://jsonplaceholder.typicode.com/users/${ userId }/todos` );
+      const jsonList = await data.json();
+      setList( jsonList );
+    };
+
+    getList();
+  }, [ userId ] );
 
   const handleAddTask = () => {
-    const task = document.querySelector( '#task' ).value;
-    setAll( prevState => [ ...prevState, task ] );
+    const title = document.querySelector( '#task' ).value;
+    setList( prevState => [
+      ...prevState, {
+        title,
+        completed: false
+      }
+    ] );
     document.querySelector( '#task' ).value = '';
   };
 
   const handleDeleteTask = ( index ) => {
-    setAll( ( prevState ) => {
+    setList( ( prevState ) => {
       return prevState.filter( ( task, i ) => i !== index );
     } );
   };
 
   const handleCompleteTask = ( index ) => {
-    setCompleted( ( prevState ) => [
-      ...prevState,
-      all[ index ]
-    ] );
-
-    handleDeleteTask( index );
+    setList( ( prevState ) => {
+      const listUpdated = [ ...prevState ];
+      listUpdated[ index ].completed = true;
+      return listUpdated;
+    } );
   };
 
 
+  const handlePrevUser = () => {
+    setUserId( userId - 1 );
+  };
+
+  const handleNextUser = () => {
+    setUserId( userId + 1 );
+  };
+
   return (
-    <div>
+    <>
+      {
+        userId > 1 &&
+        <button onClick={ handlePrevUser }>Anterior</button>
+      }
+      {
+        userId < 10 &&
+        <button onClick={ handleNextUser }>Siguiente</button>
+      }
+      {
+        userData
+          ?
+          <>
+            <h1>Información del usuario</h1>
+            <ul>
+              <li><strong>Nombre: </strong> { userData.name }</li>
+              <li><strong>Usuario: </strong> { userData.username }</li>
+              <li><strong>Email: </strong> { userData.email }</li>
+              <li><strong>Web: </strong> { userData.website }</li>
+              <li><strong>Teléfono: </strong> { userData.phone }</li>
+            </ul>
+          </>
+          : 'Espere...'
+      }
+
+
       <div>
-        <label htmlFor='task'>Tarea: </label>
+        <label htmlFor='task'>Tarea</label>
         <input type='text' id='task' />
 
-        <button onClick={ handleAddTask } style={{color:'#4CAF50'}}>Agregar nueva tarea</button>
+        <button onClick={ handleAddTask }>Agregar nueva tarea</button>
       </div>
-      <h2>Lista de tareas pendientes ({ all.length })</h2>
+
+      <h1>Lista de tareas ({ list.length } en total)</h1>
       <table>
         <thead>
         <tr>
           <th>Nombre</th>
+          <th>Estado</th>
           <th>Eliminar</th>
-          <th>Completar</th>
         </tr>
         </thead>
         <tbody>
         {
-          all.map( ( task, index ) => (
+          list.map( ( task, index ) => (
               <tr key={ index }>
-                <td>{ task }</td>
+                <td>{ task.title }</td>
+                <td className={ task.completed
+                  ? 'task-completed'
+                  : 'task-pending' }>
+                  {
+                    task.completed
+                      ? 'Completada'
+                      : <button onClick={ () => handleCompleteTask( index ) }>Marcar como completada</button>
+                  }
+                </td>
                 <td>
                   <button onClick={ () => handleDeleteTask( index ) }>Eliminar</button>
                 </td>
-                <td>
-                  <button onClick={ () => handleCompleteTask( index ) }>Completada</button>
-                </td>
               </tr>
             )
           )
         }
         </tbody>
       </table>
-
-      <h2>Lista de tareas completadas ({ completed.length })</h2>
-      <table>
-        <thead>
-        <tr>
-          <th>Nombre</th>
-        </tr>
-        </thead>
-        <tbody>
-        {
-          completed.map( ( task, index ) => (
-              <tr key={ index }>
-                <td>{ task }</td>
-              </tr>
-            )
-          )
-        }
-        </tbody>
-      </table>
-    </div>
+    </>
   );
-};
+}
 
-export default TodoList;
+export default ToDoList;

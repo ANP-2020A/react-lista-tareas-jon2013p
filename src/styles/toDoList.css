@@ -1,0 +1,8 @@
+
+.task-completed {
+  background-color: darkgreen;
+}
+
+.task-pending button{
+  background-color: orangered;
+}
